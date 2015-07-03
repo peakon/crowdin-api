@@ -1,0 +1,5 @@
+default: ['test']
+
+lint: ['jshint', 'jscs']
+
+test: ['lint']

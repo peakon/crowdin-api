@@ -1,0 +1,11 @@
+{
+    "preset": "airbnb",
+    "requireCurlyBraces": null,
+    "esnext": true,
+    "validateIndentation": "\t",
+    "requireLineFeedAtFileEnd": null,
+    "requirePaddingNewLinesAfterBlocks": null,
+    "disallowMultipleLineBreaks": null,
+    "safeContextKeyword": "self",
+    "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties"
+}
