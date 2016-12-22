@@ -152,14 +152,14 @@ module.exports = {
 	 * Track your Crowdin project translation progress by language.
 	 * @param projectName {String} Should contain the project identifier.	 */
 	translationStatus: function(projectName) {
-		return postApiCall('project/' + projectName + '/status');
+		return postApiCall('project/' + projectName + '/status', {});
 	},
 	/**
 	 * Get Crowdin Project details.
 	 * @param projectName {String} Should contain the project identifier.
 	 */
 	projectInfo: function(projectName) {
-		return postApiCall('project/' + projectName + '/info');
+		return postApiCall('project/' + projectName + '/info', {});
 	},
 	/**
 	 * Download ZIP file with translations. You can choose the language of translation you need.
@@ -194,7 +194,7 @@ module.exports = {
 	 * @param projectName {String} Name of the project to delete.
 	 */
 	deleteProject: function(projectName) {
-		return postApiCall('project/' + projectName + '/delete-project');
+		return postApiCall('project/' + projectName + '/delete-project', {});
 	},
 	/**
 	 * Add directory to Crowdin project.
@@ -251,7 +251,7 @@ module.exports = {
 	 * Download Crowdin project Translation Memory as TMX file.
 	 */
 	downloadTranslationMemory: function(projectName) {
-		return postApiCall('project/' + projectName + '/download-tm');
+		return postApiCall('project/' + projectName + '/download-tm', {});
 	},
 	/**
 	 * Upload your Translation Memory for Crowdin Project in TMX file format.
