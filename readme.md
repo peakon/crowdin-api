@@ -1,5 +1,7 @@
 # Crowdin API
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/peakon/crowdin-api.svg)](https://greenkeeper.io/)
+
 API client for the [Crowdin API](https://crowdin.com/page/api).
 
 ## Usage
