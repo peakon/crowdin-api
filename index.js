@@ -17,22 +17,23 @@ function throwError(result) {
 }
 
 function handleRequest(request) {
-  return request.then(function (body) {
-    return JSON.parse(body);
-  }).then(function (result) {
-    if (!result.success) {
-      throwError(result);
-    }
+  return request
+    .then(function (body) {
+      const result = JSON.parse(body);
+      if (result.success === false) {
+        throwError(result);
+      }
 
-    return result;
-  }).catch(function (result) {
-    if (result.response.body) {
-      var parsed = JSON.parse(result.response.body);
-      throwError(parsed);
-    }
+      return result;
+    })
+    .catch(function (err) {
+      if (err.response && err.response.body) {
+        var parsed = JSON.parse(err.response.body);
+        throwError(parsed);
+      }
 
-    throw result;
-  });
+      throw err;
+    });
 }
 
 function getApiCall(apiUrl) {
@@ -54,7 +55,7 @@ function postApiCall(apiUrl, getOptions, postOptions) {
   validateKey();
 
   var url = baseUrl + '/api/' + apiUrl;
-  var params = Object.assign(getOptions, {
+  var params = Object.assign(getOptions || {}, {
     json: true,
     key: apiKey
   });
@@ -98,7 +99,7 @@ module.exports = {
       filesInformation[index] = fs.createReadStream(fileName);
     });
 
-    return postApiCall('project/' + projectName + '/add-file', {}, Object.assign(filesInformation, params));
+    return postApiCall('project/' + projectName + '/add-file', undefined, Object.assign(filesInformation, params));
   },
   /**
    * Upload latest version of your localization file to Crowdin.
@@ -115,7 +116,7 @@ module.exports = {
       filesInformation[index] = fs.createReadStream(fileName);
     });
 
-    return postApiCall('project/' + projectName + '/update-file', {}, Object.assign(filesInformation, params));
+    return postApiCall('project/' + projectName + '/update-file', undefined, Object.assign(filesInformation, params));
   },
   /**
    * Delete file from Crowdin project. All the translations will be lost without ability to restore them.
@@ -123,7 +124,7 @@ module.exports = {
    * @param fileName {String} Name of file to delete.
    */
   deleteFile: function (projectName, fileName) {
-    return postApiCall('project/' + projectName + '/delete-file', {}, {
+    return postApiCall('project/' + projectName + '/delete-file', undefined, {
       file: fileName
     });
   },
@@ -145,20 +146,20 @@ module.exports = {
       filesInformation[index] = fs.createReadStream(fileName);
     });
 
-    return postApiCall('project/' + projectName + '/upload-translation', {}, Object.assign(filesInformation, params));
+    return postApiCall('project/' + projectName + '/upload-translation', undefined, Object.assign(filesInformation, params));
   },
   /**
    * Track your Crowdin project translation progress by language.
    * @param projectName {String} Should contain the project identifier.  */
   translationStatus: function (projectName) {
-    return postApiCall('project/' + projectName + '/status', {});
+    return postApiCall('project/' + projectName + '/status');
   },
   /**
    * Get Crowdin Project details.
    * @param projectName {String} Should contain the project identifier.
    */
   projectInfo: function (projectName) {
-    return postApiCall('project/' + projectName + '/info', {});
+    return postApiCall('project/' + projectName + '/info');
   },
   /**
    * Download ZIP file with translations. You can choose the language of translation you need.
@@ -186,14 +187,14 @@ module.exports = {
    * @param params {Object} New parameters for the project.
    */
   editProject: function (projectName, params) {
-    return postApiCall('project/' + projectName + '/edit-project', {}, params);
+    return postApiCall('project/' + projectName + '/edit-project', undefined, params);
   },
   /**
    * Delete Crowdin project with all translations.
    * @param projectName {String} Name of the project to delete.
    */
   deleteProject: function (projectName) {
-    return postApiCall('project/' + projectName + '/delete-project', {});
+    return postApiCall('project/' + projectName + '/delete-project');
   },
   /**
    * Add directory to Crowdin project.
@@ -201,7 +202,7 @@ module.exports = {
    * @param directory {String} Directory name (with path if nested directory should be created).
    */
   createDirectory: function (projectName, directory) {
-    return postApiCall('project/' + projectName + '/add-directory', {}, {
+    return postApiCall('project/' + projectName + '/add-directory', undefined, {
       name: directory
     });
   },
@@ -212,7 +213,7 @@ module.exports = {
    * @param params {Object} New parameters for the directory.
    */
   changeDirectory: function (projectName, directory, params) {
-    return postApiCall('project/' + projectName + '/change-directory', {}, {
+    return postApiCall('project/' + projectName + '/change-directory', undefined, {
       name: directory
     }, params);
   },
@@ -222,7 +223,7 @@ module.exports = {
    * @param directory {String} Directory path (or just name if the directory is in root).
    */
   deleteDirectory: function (projectName, directory) {
-    return postApiCall('project/' + projectName + '/delete-directory', {}, {
+    return postApiCall('project/' + projectName + '/delete-directory', undefined, {
       name: directory
     });
   },
@@ -242,7 +243,7 @@ module.exports = {
       fileNameOrStream = fs.createReadStream(fileNameOrStream);
     }
 
-    return postApiCall('project/' + projectName + '/upload-glossary', {}, {
+    return postApiCall('project/' + projectName + '/upload-glossary', undefined, {
       file: fileNameOrStream
     });
   },
@@ -250,7 +251,7 @@ module.exports = {
    * Download Crowdin project Translation Memory as TMX file.
    */
   downloadTranslationMemory: function (projectName) {
-    return postApiCall('project/' + projectName + '/download-tm', {});
+    return postApiCall('project/' + projectName + '/download-tm');
   },
   /**
    * Upload your Translation Memory for Crowdin Project in TMX file format.
@@ -262,7 +263,7 @@ module.exports = {
       fileNameOrStream = fs.createReadStream(fileNameOrStream);
     }
 
-    return postApiCall('project/' + projectName + '/upload-tm', {}, {
+    return postApiCall('project/' + projectName + '/upload-tm', undefined, {
       file: fileNameOrStream
     });
   },
