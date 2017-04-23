@@ -1,5 +1,5 @@
 default: ['test']
 
-lint: ['jshint', 'jscs']
+lint: ['eslint']
 
 test: ['lint']
