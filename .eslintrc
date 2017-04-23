@@ -1,0 +1,12 @@
+{
+  "extends": "standard",
+  "rules": {
+    "semi": [2, "always"],
+    "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}],
+    "arrow-parens": [2, "as-needed"],
+    "no-extra-semi": 2
+  },
+  "ecmaFeatures": {
+    "blockBindings": true
+  }
+}
