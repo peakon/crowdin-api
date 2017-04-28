@@ -28,8 +28,12 @@ function handleRequest(request) {
     })
     .catch(function (err) {
       if (err.response && err.response.body) {
-        var parsed = JSON.parse(err.response.body);
-        throwError(parsed);
+        try {
+          var parsed = JSON.parse(err.response.body);
+          throwError(parsed);
+        } catch (parseErr) {
+          throw err;
+        }
       }
 
       throw err;
