@@ -6,7 +6,9 @@
     "arrow-parens": [2, "as-needed"],
     "no-extra-semi": 2
   },
-  "ecmaFeatures": {
-    "blockBindings": true
+  "parserOptions": {
+    "ecmaFeatures": {
+      "blockBindings": false
+    }
   }
 }
