@@ -48,32 +48,46 @@ async function handleStream(request) {
     temp.open('crowdin', cb);
   });
 
+  const out = fs.createWriteStream(null, {
+    fd
+  });
+
   return new Bluebird((resolve, reject) => {
     let statusCode;
 
     request
       .on('error', err => {
-        reject(parseError(err));
+        return reject(parseError(err));
       })
       .on('response', response => {
         statusCode = response.statusCode;
       })
-      .on('close', async () => {
-        if (statusCode < 400) {
-          resolve(path);
-        } else {
-          try {
-            const result = await Bluebird.fromCallback(cb => fs.readFile(path, 'utf8'));
+      .pipe(out);
 
-            reject(resultToError(result));
+    out.on('close', async () => {
+      if (statusCode < 400) {
+        return resolve(path);
+      } else {
+        try {
+          let body = await Bluebird.fromCallback(cb => fs.readFile(path, {
+            encoding: 'utf8'
+          }, cb));
+
+          try {
+            const result = JSON.parse(body);
+
+            return reject(resultToError(result));
           } catch (err) {
-            reject(`Error streaming from Crowdin: ${statusCode}`);
+            console.log('Error parsing body', err);
+            console.log(body);
           }
+        } catch (err) {
+          console.log('Error reading body file', err);
         }
-      })
-      .pipe(fs.createWriteStream(null, {
-        fd
-      }));
+
+        return reject(`Error streaming from Crowdin: ${statusCode}`);
+      }
+    });
   });
 }
 
