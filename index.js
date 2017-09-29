@@ -96,8 +96,6 @@ class CrowdinApi {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
 
-    console.log(baseUrl, apiKey);
-
     if (!apiKey) {
       throw new Error('Please specify CrowdIn API key.');
     }
