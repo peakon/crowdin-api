@@ -1,10 +1,11 @@
 'use strict';
 
-var fs = require('fs');
-var request = require('request-promise');
+const fs = require('fs');
+const path = require('path');
+const request = require('request-promise-native');
 
-var apiKey;
-var baseUrl = 'https://api.crowdin.com';
+let apiKey;
+let baseUrl = 'https://api.crowdin.com';
 
 function validateKey() {
   if (apiKey === undefined) {
@@ -95,12 +96,17 @@ module.exports = {
    *   Note! 20 files max are allowed to upload per one time file transfer.
    * @param params {Object} Information about uploaded files.
    */
-  addFile: function (projectName, files, params) {
-    var filesInformation = {};
+  addFile: function (projectName, files, params, folder, downloadPath) {
+    let filesInformation = {};
 
     files.forEach(function (fileName) {
-      var index = 'files[' + fileName + ']';
-      filesInformation[index] = fs.createReadStream(fileName);
+      let folderName = folder || '';
+      let folderFileName = path.join(folderName, fileName);
+      let files = `files[${folderFileName}]`;
+      let patterns = `export_patterns[${folderFileName}]`;
+
+      filesInformation[files] = fs.createReadStream(fileName);
+      filesInformation[patterns] = path.join('/', folderName, downloadPath, '/%locale%.%file_extension%');
     });
 
     return postApiCall('project/' + projectName + '/add-file', undefined, Object.assign(filesInformation, params));
@@ -112,11 +118,12 @@ module.exports = {
    *   Note! 20 files max are allowed to upload per one time file transfer.
    * @param params {Object} Information about updated files.
    */
-  updateFile: function (projectName, files, params) {
+  updateFile: function (projectName, files, params, folder) {
     var filesInformation = {};
 
     files.forEach(function (fileName) {
-      var index = 'files[' + fileName + ']';
+      let folderName = (folder) ? `${folder}/` : '';
+      let index = `files[${folderName}${fileName}]`;
       filesInformation[index] = fs.createReadStream(fileName);
     });
 
