@@ -1,11 +1,15 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const request = require('request');
 const requestPromise = require('request-promise');
 const temp = require('temp');
 const Bluebird = require('bluebird');
 const _ = require('lodash');
+
+let apiKey;
+let baseUrl = 'https://api.crowdin.com';
 
 temp.track();
 
@@ -138,7 +142,20 @@ class CrowdinApi {
     }));
   }
 
-  /**
+  addFile(projectName, file, params, folder) {
+    let fileInformation = {};
+    let folderName = folder || '';
+    let folderFileName = path.join(folderName, file.path);
+    let files = `files[${folderFileName}]`;
+    let patterns = `export_patterns[${folderFileName}]`;
+
+    fileInformation[files] = fs.createReadStream(file.path);
+    fileInformation[patterns] = file.exportPattern;
+
+    return postApiCall('project/' + projectName + '/add-file', undefined, Object.assign(fileInformation, params));
+  }
+
+    /**
    * Add new file to Crowdin project
    * @param projectName {String} Should contain the project identifier
    * @param files {Array} Files array that should be added to Crowdin project.
@@ -146,12 +163,21 @@ class CrowdinApi {
    *   Note! 20 files max are allowed to upload per one time file transfer.
    * @param params {Object} Information about uploaded files.
    */
-  addFile(projectName, files, params) {
+  addFiles(projectName, files, params) {
     const filesInformation = _.fromPairs(files, fileName => {
       return [`files[${fileName}]`, fs.createReadStream(fileName)];
     });
 
     return this.postPromise(`project/${projectName}/add-file`, undefined, Object.assign(filesInformation, params));
+  }
+
+  updateFile(projectName, file, params, folder) {
+    var fileInformation = {};
+    let folderName = (folder) ? `${folder}/` : '';
+    let index = `files[${folderName}${file.path}]`;
+    fileInformation[index] = fs.createReadStream(file.path);
+
+    return postApiCall('project/' + projectName + '/update-file', undefined, Object.assign(fileInformation, params));
   }
 
   /**
@@ -161,7 +187,7 @@ class CrowdinApi {
    *   Note! 20 files max are allowed to upload per one time file transfer.
    * @param params {Object} Information about updated files.
    */
-  updateFile(projectName, files, params) {
+  updateFiles(projectName, files, params) {
     const filesInformation = _.fromPairs(files, fileName => {
       return [`files[${fileName}]`, fs.createReadStream(fileName)];
     });
