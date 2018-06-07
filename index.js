@@ -96,20 +96,17 @@ module.exports = {
    *   Note! 20 files max are allowed to upload per one time file transfer.
    * @param params {Object} Information about uploaded files.
    */
-  addFile: function (projectName, files, params, folder, downloadPath) {
-    let filesInformation = {};
+  addFile: function (projectName, file, params, folder) {
+    let fileInformation = {};
+    let folderName = folder || '';
+    let folderFileName = path.join(folderName, file.path);
+    let files = `files[${folderFileName}]`;
+    let patterns = `export_patterns[${folderFileName}]`;
 
-    files.forEach(function (fileName) {
-      let folderName = folder || '';
-      let folderFileName = path.join(folderName, fileName);
-      let files = `files[${folderFileName}]`;
-      let patterns = `export_patterns[${folderFileName}]`;
+    fileInformation[files] = fs.createReadStream(file.path);
+    fileInformation[patterns] = file.exportPattern;
 
-      filesInformation[files] = fs.createReadStream(fileName);
-      filesInformation[patterns] = path.join('/', folderName, downloadPath, '/%locale%.%file_extension%');
-    });
-
-    return postApiCall('project/' + projectName + '/add-file', undefined, Object.assign(filesInformation, params));
+    return postApiCall('project/' + projectName + '/add-file', undefined, Object.assign(fileInformation, params));
   },
   /**
    * Upload latest version of your localization file to Crowdin.
@@ -118,16 +115,13 @@ module.exports = {
    *   Note! 20 files max are allowed to upload per one time file transfer.
    * @param params {Object} Information about updated files.
    */
-  updateFile: function (projectName, files, params, folder) {
-    var filesInformation = {};
+  updateFile: function (projectName, file, params, folder) {
+    var fileInformation = {};
+    let folderName = (folder) ? `${folder}/` : '';
+    let index = `files[${folderName}${file.path}]`;
+    fileInformation[index] = fs.createReadStream(file.path);
 
-    files.forEach(function (fileName) {
-      let folderName = (folder) ? `${folder}/` : '';
-      let index = `files[${folderName}${fileName}]`;
-      filesInformation[index] = fs.createReadStream(fileName);
-    });
-
-    return postApiCall('project/' + projectName + '/update-file', undefined, Object.assign(filesInformation, params));
+    return postApiCall('project/' + projectName + '/update-file', undefined, Object.assign(fileInformation, params));
   },
   /**
    * Delete file from Crowdin project. All the translations will be lost without ability to restore them.

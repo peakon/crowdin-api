@@ -1,10 +1,10 @@
 {
-  "name": "crowdin-api",
+  "name": "@outdoorsyco/crowdin-api",
   "version": "1.1.2",
   "description": "API client for Crowdin",
   "repository": {
     "type": "git",
-    "url": "git@github.com:peakon/crowdin-api.git"
+    "url": "git@github.com:outdoorsy/crowdin-api.git"
   },
   "main": "index.js",
   "scripts": {
