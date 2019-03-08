@@ -5,7 +5,6 @@ const request = require('request');
 const requestPromise = require('request-promise');
 const temp = require('temp');
 const Bluebird = require('bluebird');
-const _ = require('lodash');
 
 temp.track();
 
@@ -91,6 +90,20 @@ async function handleStream(request) {
   });
 }
 
+function packFiles(files) {
+  return Object.keys(files).reduce((acc, crowdinPath) => {
+      let value = files[crowdinPath];
+      if (typeof value === 'string') {
+          value = fs.createReadStream(value);
+      }
+
+      return ({
+          ...acc,
+          [`files[${crowdinPath}]`]: value,
+      });
+  }, {});
+}
+
 class CrowdinApi {
   constructor({baseUrl = 'https://api.crowdin.com', apiKey}) {
     this.baseUrl = baseUrl;
@@ -128,13 +141,13 @@ class CrowdinApi {
     }));
   }
 
-  getStream(path) {
+  getStream(path, qs = {}) {
     return handleStream(request.get({
       uri: this.uri(path),
-      qs: {
+      qs: Object.assign(qs, {
         json: true,
         key: this.apiKey
-      }
+      }),
     }));
   }
 
@@ -147,11 +160,7 @@ class CrowdinApi {
    * @param params {Object} Information about uploaded files.
    */
   addFile(projectName, files, params) {
-    const filesInformation = _.fromPairs(files, fileName => {
-      return [`files[${fileName}]`, fs.createReadStream(fileName)];
-    });
-
-    return this.postPromise(`project/${projectName}/add-file`, undefined, Object.assign(filesInformation, params));
+    return this.postPromise(`project/${projectName}/add-file`, undefined, {...packFiles(files), ...params});
   }
 
   /**
@@ -162,11 +171,7 @@ class CrowdinApi {
    * @param params {Object} Information about updated files.
    */
   updateFile(projectName, files, params) {
-    const filesInformation = _.fromPairs(files, fileName => {
-      return [`files[${fileName}]`, fs.createReadStream(fileName)];
-    });
-
-    return this.postPromise(`project/${projectName}/update-file`, undefined, Object.assign(filesInformation, params));
+    return this.postPromise(`project/${projectName}/update-file`, undefined, {...packFiles(files), ...params});
   }
 
   /**
@@ -189,11 +194,7 @@ class CrowdinApi {
    * @param params {Object} Information about updated files.
    */
   updateTranslations(projectName, files, language, params) {
-    const filesInformation = _.fromPairs(files, fileName => {
-      return [`files[${fileName}]`, fs.createReadStream(fileName)];
-    });
-
-    return this.postPromise(`project/${projectName}/upload-translation`, undefined, Object.assign(filesInformation, params));
+    return this.postPromise(`project/${projectName}/upload-translation`, undefined, {...packFiles(files), ...params});
   }
 
   /**
@@ -204,11 +205,51 @@ class CrowdinApi {
   }
 
   /**
+   * Get the detailed translation progress for specified language.
+   * @param projectName {String} Should contain the project identifier.
+   * @param language {String} Crowdin language codes.  */
+  languageStatus(projectName, language) {
+    return this.postPromise(`project/${projectName}/language-status`, undefined, { language });
+  }
+
+  /**
    * Get Crowdin Project details.
    * @param projectName {String} Should contain the project identifier.
    */
   projectInfo(projectName) {
     return this.postPromise(`project/${projectName}/info`);
+  }
+
+  /**
+   * Get a list of issues reported in the Editor.
+   * @param projectName {String} Should contain the project identifier.
+   * @param params {Object} See https://support.crowdin.com/api/issues/
+   * @param params.type {String} Defines the issue type.
+   * @param params.status {String} Defines the issue resolution status.
+   * @param params.file {String} Defines the path of the file issues are associated with.
+   * @param params.language {String} Defines the language issues are associated with.
+   * @param params.date_from {String} Issues added from. Use the following ISO 8601 format: YYYY-MM-DD±hh:mm.
+   * @param params.date_to {String} Issues added to. Use the following ISO 8601 format: YYYY-MM-DD±hh:mm. */
+  reportedIssues(projectName, params = {}) {
+    return this.postPromise(`project/${projectName}/language-status`, undefined, params);
+  }
+
+  /**
+   * This method exports single translated files from Crowdin.
+   * @param projectName {String} Should contain the project identifier.
+   * @param file {String} This parameter specifies a path to the file that should be exported from the project.
+   * @param language {String} Crowdin language code.
+   * @param params {Object} See https://support.crowdin.com/api/export-file/
+   * @param params.branch {String} The name of related version branch (Versions Management).
+   * @param params.format {String} Specify xliff to export file in the XLIFF file format.
+   * @param params.export_translated_only {Boolean} Defines whether only translated strings will be exported to the final file.
+   * @param params.export_approved_only {Boolean} If set to 1 only approved translations will be exported in resulted file. */
+  exportFile(projectName, file, language, params = {}) {
+    return this.getStream(`project/${projectName}/export-file`, {
+        ...params,
+        file,
+        language,
+    });
   }
 
   /**
@@ -232,6 +273,37 @@ class CrowdinApi {
    */
   exportTranslations(projectName) {
     return this.getPromise(`project/${projectName}/export`);
+  }
+
+  /**
+   * Get the status of translations export.
+   * @param projectName {String} Project identifier.
+   * @param branch {String} The name of related version branch (Versions Management).
+   */
+  translationExportStatus(projectName, branch = '') {
+    return this.getPromise(`project/${projectName}/export-status`, { branch });
+  }
+
+  /**
+   * Pre-translate Crowdin project files.
+   * @param projectName {String} Project identifier.
+   * @param languages {Array} Set of languages to which pre-translation should be applied.
+   * @param files {Array} Files array that should be translated. Values should match your Crowdin project structure.
+   * @param params {Object} https://support.crowdin.com/api/pre-translate/
+   * @param params.method {String} Defines which method will be used for pre-translation.
+   * @param params.engine {String} Defines engine for Machine Translation.
+   * @param params.approve_translated {Boolean} Automatically approves translated strings.
+   * @param params.auto_approve_option {Number} Defines which translations added by pre-translation via TM should be auto-approved.
+   * @param params.import_duplicates {Boolean} Adds translations even if the same translation already exists.
+   * @param params.apply_untranslated_strings_only {Boolean} Applies translations for untranslated strings only.
+   * @param params.perfect_match {Boolean} Pre-translate will be applied only for those strings, that have absolute match in source text and contextual information.
+   */
+  preTranslate(projectName, languages, files, params = {}) {
+    return this.postPromise(`project/${projectName}/pre-translate`, undefined, {
+        ...params,
+        languages,
+        files,
+    });
   }
 
   /**
@@ -295,7 +367,7 @@ class CrowdinApi {
   /**
    * Upload your glossaries for Crowdin Project in TBX file format.
    * @param projectName {String} Should contain the project identifier.
-   * @param fileNameOrStream {String} Name of the file to upload or stream which contains file to upload.
+   * @param fileNameOrStream {String|ReadStream} Name of the file to upload or stream which contains file to upload.
    */
   uploadGlossary(projectName, fileNameOrStream) {
     if (typeof fileNameOrStream === 'string') {
@@ -317,7 +389,7 @@ class CrowdinApi {
   /**
    * Upload your Translation Memory for Crowdin Project in TMX file format.
    * @param projectName {String} Should contain the project identifier.
-   * @param fileNameOrStream {String} Name of the file to upload or stream which contains file to upload.
+   * @param fileNameOrStream {String|ReadStream} Name of the file to upload or stream which contains file to upload.
    */
   uploadTranslationMemory(projectName, fileNameOrStream) {
     if (typeof fileNameOrStream === 'string') {
@@ -334,6 +406,109 @@ class CrowdinApi {
    */
   supportedLanguages() {
     return this.getPromise('supported-languages');
+  }
+
+  /**
+   * Generate pseudo translation files for the whole project.
+   * @param projectName {String} Project identifier.
+   * @param params {Object} https://support.crowdin.com/api/pseudo-export/
+   * @param params.prefix {String} Add special characters at the beginning of each string to show where messages have been concatenated together.
+   * @param params.suffix {String} Add special characters at the end of each string to show where messages have been concatenated together.
+   * @param params.length_transformation {Number} Make string larger or shorter.
+   * @param params.char_transformation {String} Transforms characters to other languages.
+   */
+  pseudoExport(projectName, params = {}) {
+    return this.getPromise(`project/${projectName}/pseudo-export`, params);
+  }
+
+  /**
+   * Download ZIP file with pseudo translations.
+   * @param projectName {String} Project identifier.
+   */
+  pseudoDownload(projectName) {
+    return this.getStream(`project/${projectName}/pseudo-download`);
+  }
+
+  /**
+   * Generate Costs Estimation report to have an insight on how to plan the budget.
+   * This report allows you to calculate the approximate translation cost of currently untranslated strings in the project.
+   * @param projectName {String} Project identifier.
+   * @param language {String} The language for which the report should be generated.
+   * @param params {Object} https://support.crowdin.com/api/export-costs-estimation-report/
+   * @param params.unit {String} Defines the report unit.
+   * @param params.mode {String} Defines the report mode.
+   * @param params.calculate_internal_fuzzy_matches {Boolean} Available for fuzzy mode only.
+   * @param params.date_from {String} Strings added from.
+   * @param params.date_to {String} Strings added to.
+   * @param params.regular_rates {Array} Defines the regular rates for the specified categories.
+   * @param params.individual_rates {Array} Defines individual rates for the specified languages in the specified categories.
+   * @param params.currency {String} Defines the currency for which the whole report is generated.
+   * @param params.format {String} Defines the export file format.
+   */
+  exportCostsEstimationReport(projectName, language, params = {}) {
+    return this.postPromise(`project/${projectName}/reports/costs-estimation/export`, undefined, params);
+  }
+
+  /**
+   * Download previously generated Costs Estimation report.
+   * @param projectName {String} Project identifier.
+   * @param hash {String} Defines hash previously received from the export of Costs Estimation report method.
+   */
+  downloadCostsEstimationReport(projectName, hash) {
+    return this.getStream(`project/${projectName}/reports/costs-estimation/download`, { hash });
+  }
+
+  /**
+   * Generate Translation Costs report to calculate the real translation cost and know how much your translators
+   * and proofreaders should be paid.
+   * @param projectName {String} Project identifier.
+   * @param params {Object} https://support.crowdin.com/api/export-translation-costs-report/
+   * @param params.unit {String} Defines the report unit.
+   * @param params.mode {String} Defines the report mode.
+   * @param params.date_from {String} Strings added from.
+   * @param params.date_to {String} Strings added to.
+   * @param params.regular_rates {Array} Defines the regular rates for the specified categories.
+   * @param params.individual_rates {Array} Defines individual rates for the specified languages in the specified categories.
+   * @param params.currency {String} Defines the currency for which the whole report is generated.
+   * @param params.format {String} Defines the export file format.
+   * @param params.role_based_costs {Boolean} Defines whether the costs should be calculated based on contributions or on the role in the project.
+   * @param params.group_by {String} Group data by 'user' (default) or by 'language'.
+   */
+  exportTranslationCostsReport(projectName, params = {}) {
+    return this.postPromise(`project/${projectName}/reports/translation-costs/export`, undefined, params);
+  }
+
+  /**
+   * Download previously generated Translation Costs report.
+   * @param projectName {String} Project identifier.
+   * @param hash {String} Defines hash previously received from the export of Translation Costs report method.
+   */
+  downloadTranslationCostsReport(projectName, hash) {
+    return this.getStream(`project/${projectName}/reports/translation-costs/download`, { hash });
+  }
+
+  /**
+   * Generate Top Members report to know who contributed the most to
+   * your project's translation during the specified date range.
+   * @param projectName {String} Project identifier.
+   * @param params {Object} https://support.crowdin.com/api/export-top-members-report/
+   * @param params.unit {String} Defines the report unit.
+   * @param params.language {String} The language for which the report should be generated.
+   * @param params.date_from {String} Strings added from.
+   * @param params.date_to {String} Strings added to.
+   * @param params.format {String} Defines the export file format.
+   */
+  exportTopMembersReport(projectName, params = {}) {
+    return this.postPromise(`project/${projectName}/reports/top-members/export`, undefined, params);
+  }
+
+  /**
+   * Download previously generated Top Members report.
+   * @param projectName {String} Project identifier.
+   * @param hash {String} Defines hash previously received from the export of Top Members report method.
+   */
+  downloadTopMembersReport(projectName, hash) {
+    return this.getStream(`project/${projectName}/reports/top-members/download`, { hash });
   }
 }
 
