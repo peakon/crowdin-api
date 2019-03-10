@@ -92,14 +92,14 @@ async function handleStream(request) {
 
 function packFiles(files) {
   return Object.keys(files).reduce((acc, crowdinPath) => {
-      let value = files[crowdinPath];
-      if (typeof value === 'string') {
-          value = fs.createReadStream(value);
-      }
+    let value = files[crowdinPath];
+    if (typeof value === 'string') {
+      value = fs.createReadStream(value);
+    }
 
-      acc[`files[${crowdinPath}]`] = value;
+    acc[`files[${crowdinPath}]`] = value;
 
-      return acc;
+    return acc;
   }, {});
 }
 
@@ -146,7 +146,7 @@ class CrowdinApi {
         ...qs,
         json: true,
         key: this.apiKey
-      },
+      }
     }));
   }
 
@@ -159,7 +159,9 @@ class CrowdinApi {
    * @param params {Object} Information about uploaded files.
    */
   addFile(projectName, files, params) {
-    return this.postPromise(`project/${projectName}/add-file`, undefined, {...packFiles(files), ...params});
+    return this.postPromise(`project/${projectName}/add-file`, undefined, {
+      ...packFiles(files), ...params
+    });
   }
 
   /**
@@ -170,7 +172,9 @@ class CrowdinApi {
    * @param params {Object} Information about updated files.
    */
   updateFile(projectName, files, params) {
-    return this.postPromise(`project/${projectName}/update-file`, undefined, {...packFiles(files), ...params});
+    return this.postPromise(`project/${projectName}/update-file`, undefined, {
+      ...packFiles(files), ...params
+    });
   }
 
   /**
@@ -193,7 +197,9 @@ class CrowdinApi {
    * @param params {Object} Information about updated files.
    */
   updateTranslations(projectName, files, language, params) {
-    return this.postPromise(`project/${projectName}/upload-translation`, undefined, {...packFiles(files), ...params});
+    return this.postPromise(`project/${projectName}/upload-translation`, undefined, {
+      ...packFiles(files), ...params
+    });
   }
 
   /**
@@ -208,7 +214,9 @@ class CrowdinApi {
    * @param projectName {String} Should contain the project identifier.
    * @param language {String} Crowdin language codes.  */
   languageStatus(projectName, language) {
-    return this.postPromise(`project/${projectName}/language-status`, undefined, { language });
+    return this.postPromise(`project/${projectName}/language-status`, undefined, {
+      language
+    });
   }
 
   /**
@@ -245,9 +253,9 @@ class CrowdinApi {
    * @param params.export_approved_only {Boolean} If set to 1 only approved translations will be exported in resulted file. */
   exportFile(projectName, file, language, params = {}) {
     return this.getStream(`project/${projectName}/export-file`, {
-        ...params,
-        file,
-        language,
+      ...params,
+      file,
+      language
     });
   }
 
@@ -280,7 +288,9 @@ class CrowdinApi {
    * @param branch {String} The name of related version branch (Versions Management).
    */
   translationExportStatus(projectName, branch = '') {
-    return this.getPromise(`project/${projectName}/export-status`, { branch });
+    return this.getPromise(`project/${projectName}/export-status`, {
+      branch
+    });
   }
 
   /**
@@ -299,9 +309,9 @@ class CrowdinApi {
    */
   preTranslate(projectName, languages, files, params = {}) {
     return this.postPromise(`project/${projectName}/pre-translate`, undefined, {
-        ...params,
-        languages,
-        files,
+      ...params,
+      languages,
+      files
     });
   }
 
@@ -454,7 +464,9 @@ class CrowdinApi {
    * @param hash {String} Defines hash previously received from the export of Costs Estimation report method.
    */
   downloadCostsEstimationReport(projectName, hash) {
-    return this.getStream(`project/${projectName}/reports/costs-estimation/download`, { hash });
+    return this.getStream(`project/${projectName}/reports/costs-estimation/download`, {
+      hash
+    });
   }
 
   /**
@@ -483,7 +495,9 @@ class CrowdinApi {
    * @param hash {String} Defines hash previously received from the export of Translation Costs report method.
    */
   downloadTranslationCostsReport(projectName, hash) {
-    return this.getStream(`project/${projectName}/reports/translation-costs/download`, { hash });
+    return this.getStream(`project/${projectName}/reports/translation-costs/download`, {
+      hash
+    });
   }
 
   /**
@@ -507,7 +521,9 @@ class CrowdinApi {
    * @param hash {String} Defines hash previously received from the export of Top Members report method.
    */
   downloadTopMembersReport(projectName, hash) {
-    return this.getStream(`project/${projectName}/reports/top-members/download`, { hash });
+    return this.getStream(`project/${projectName}/reports/top-members/download`, {
+      hash
+    });
   }
 }
 
