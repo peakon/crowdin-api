@@ -5,10 +5,5 @@
     "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}],
     "arrow-parens": [2, "as-needed"],
     "no-extra-semi": 2
-  },
-  "parserOptions": {
-    "ecmaFeatures": {
-      "blockBindings": false
-    }
   }
 }

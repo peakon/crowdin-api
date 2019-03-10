@@ -43,7 +43,7 @@ async function handlePromise(request) {
 }
 
 async function handleStream(request) {
-  const {path, fd} = await Bluebird.fromCallback(cb => {
+  const { path, fd } = await Bluebird.fromCallback(cb => {
     temp.open('crowdin', cb);
   });
 
@@ -104,7 +104,7 @@ function packFiles(files) {
 }
 
 class CrowdinApi {
-  constructor({baseUrl = 'https://api.crowdin.com', apiKey}) {
+  constructor({ baseUrl = 'https://api.crowdin.com', apiKey } = {}) {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
 
