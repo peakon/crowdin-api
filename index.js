@@ -97,10 +97,9 @@ function packFiles(files) {
           value = fs.createReadStream(value);
       }
 
-      return ({
-          ...acc,
-          [`files[${crowdinPath}]`]: value,
-      });
+      acc[`files[${crowdinPath}]`] = value;
+
+      return acc;
   }, {});
 }
 
@@ -129,14 +128,13 @@ class CrowdinApi {
   }
 
   postPromise(path, qs = {}, data) {
-    Object.assign(qs, {
-      json: true,
-      key: this.apiKey
-    });
-
     return handlePromise(requestPromise.post({
       uri: this.uri(path),
-      qs,
+      qs: {
+        ...qs,
+        json: true,
+        key: this.apiKey
+      },
       formData: data
     }));
   }
@@ -144,10 +142,11 @@ class CrowdinApi {
   getStream(path, qs = {}) {
     return handleStream(request.get({
       uri: this.uri(path),
-      qs: Object.assign(qs, {
+      qs: {
+        ...qs,
         json: true,
         key: this.apiKey
-      }),
+      },
     }));
   }
 
