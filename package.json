@@ -1,6 +1,6 @@
 {
   "name": "crowdin-api",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "description": "API client for Crowdin",
   "repository": {
     "type": "git",
