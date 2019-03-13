@@ -336,9 +336,10 @@ class CrowdinApi {
    * Add directory to Crowdin project.
    * @param projectName {String} Should contain the project identifier.
    * @param directory {String} Directory name (with path if nested directory should be created).
+   * @param params {Object} New parameters for the directory.
    */
-  createDirectory(projectName, directory) {
-    return this.postPromise(`project/${projectName}/add-directory`, undefined, {
+  createDirectory(projectName, directory, params) {
+    return this.postPromise(`project/${projectName}/add-directory`, params, {
       name: directory
     });
   }
@@ -350,9 +351,9 @@ class CrowdinApi {
    * @param params {Object} New parameters for the directory.
    */
   changeDirectory(projectName, directory, params) {
-    return this.postPromise(`project/${projectName}/change-directory`, undefined, {
+    return this.postPromise(`project/${projectName}/change-directory`, params, {
       name: directory
-    }, params);
+    });
   }
 
   /**
