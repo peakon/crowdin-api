@@ -198,7 +198,7 @@ class CrowdinApi {
    */
   updateTranslations(projectName, files, language, params) {
     return this.postPromise(`project/${projectName}/upload-translation`, undefined, {
-      ...packFiles(files), ...params
+      ...packFiles(files), ...params, language
     });
   }
 
