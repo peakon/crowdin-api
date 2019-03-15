@@ -5,7 +5,10 @@ API client for the [Crowdin API](https://support.crowdin.com/api/api-integration
 ## Usage
 ```
 var CrowdinApi = require('crowdin-api');
-var api = new CrowdinApi({ apiKey: 'abcd' }); // Get this from your project page
+var api = new CrowdinApi({
+  apiKey: 'abcd', // Get this from your project page
+  project: 'project-name'
+});
 
-api.uploadFile('project-name', ...).then(function(result) {...}).catch(function(err) {...});
+api.updateFile(files, ...).then(function(result) {...}).catch(function(err) {...});
 ```
