@@ -104,14 +104,17 @@ function packFiles(files) {
 }
 
 class CrowdinApi {
-  constructor({ baseUrl = 'https://api.crowdin.com', apiKey, projectName } = {}) {
+  constructor({ baseUrl = 'https://api.crowdin.com', apiKey, login, accountKey, projectName } = {}) {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
     this.projectName = projectName;
 
-    if (!apiKey) {
-      throw new Error('Please specify CrowdIn API key.');
+    const accountCredentials = Boolean(login && accountKey);
+    const projectCredentials = Boolean(apiKey);
+    if (projectCredentials == accountCredentials) {
+      throw new Error('Please specify CrowdIn credentials with login and accountKey options. If you have a legacy key from the project settings page then pass just the apiKey setting.')
     }
+    this.credentials = projectCredentials ? { key: apiKey } : { login, 'account-key': accountKey };
 
     if (!projectName) {
       throw new Error('Please specify CrowdIn project.');
@@ -127,7 +130,7 @@ class CrowdinApi {
       uri: this.uri(path),
       qs: {
         json: true,
-        key: this.apiKey
+        ...this.credentials
       }
     }));
   }
@@ -138,7 +141,7 @@ class CrowdinApi {
       qs: {
         ...qs,
         json: true,
-        key: this.apiKey
+        ...this.credentials
       },
       formData: data
     }));
@@ -150,7 +153,7 @@ class CrowdinApi {
       qs: {
         ...qs,
         json: true,
-        key: this.apiKey
+        ...this.credentials
       }
     }));
   }
